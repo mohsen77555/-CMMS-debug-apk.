@@ -1,0 +1,216 @@
+name: Build Hamoudi Stage 12 toddler APK
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".hamoudi-stage12-main-trigger/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+
+    steps:
+      - name: Checkout development source
+        uses: actions/checkout@v4
+        with:
+          ref: hamoudi-full-build
+
+      - name: Reconstruct application and apply toddler UI
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec > >(tee /tmp/stage12-source.log) 2>&1
+          mkdir -p app
+          cat \
+            .hamoudi-full-source/part-00.b64 \
+            .hamoudi-full-source/part-01.b64 \
+            .hamoudi-full-source/part-02.b64 \
+            .hamoudi-full-source/part-030.b64 \
+            .hamoudi-full-source/part-031.b64 \
+            .hamoudi-full-source/part-04.b64 \
+            | base64 --decode > /tmp/hamoudi-full.tar.xz
+          echo "26adc13b69d441a3eed6205b6ef9e1a72c4f621b4982e2c84d377c38dd5f1935  /tmp/hamoudi-full.tar.xz" | sha256sum -c -
+          tar -xJf /tmp/hamoudi-full.tar.xz -C app
+
+          cat .hamoudi-stage09-patch/script-part-*.txt > /tmp/apply_stage09.py
+          echo "f16450519656b898d7a64139dc2375a15440baae3bba090a88da100c728e0150  /tmp/apply_stage09.py" | sha256sum -c -
+          python3 /tmp/apply_stage09.py app
+
+          mkdir -p app/assets/icon
+          base64 --decode .hamoudi-stage09-icon/icon.b64 > app/assets/icon/hamoodi_icon.jpg
+          cp -a .hamoudi-stage10-source/lib/. app/lib/
+          cp -a .hamoudi-stage11-source/lib/. app/lib/
+          cp -a .hamoudi-stage12-source/lib/. app/lib/
+          sed -i 's/^version:.*/version: 2.1.0+12/' app/pubspec.yaml
+          sed -i 's/(wins \/ 30)\.clamp(0\.0, 1\.0)/(wins \/ 30).clamp(0.0, 1.0).toDouble()/' app/lib/screens/games_hub_screen.dart
+          rm -f app/test/widget_test.dart
+          grep -n '^version:' app/pubspec.yaml
+          find app/lib/screens -maxdepth 1 -type f | sort | tail -n 20
+
+      - name: Generate Arabic toddler voice assets
+        id: voices
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec > >(tee /tmp/stage12-voices.log) 2>&1
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq espeak-ng
+          mkdir -p app/assets/audio/toddler
+
+          make_voice() {
+            local file="$1"
+            local phrase="$2"
+            if espeak-ng -v ar -s 118 -p 54 -a 170 -w "app/assets/audio/toddler/${file}" "${phrase}"; then
+              echo "generated ${file}: ${phrase}"
+            else
+              cp app/assets/audio/sparkle.wav "app/assets/audio/toddler/${file}"
+              echo "fallback ${file}: ${phrase}"
+            fi
+          }
+
+          make_voice lion.wav "أسد"
+          make_voice cat.wav "قطة"
+          make_voice dog.wav "كلب"
+          make_voice elephant.wav "فيل"
+          make_voice bird.wav "عصفور"
+          make_voice red.wav "أحمر"
+          make_voice blue.wav "أزرق"
+          make_voice yellow.wav "أصفر"
+          make_voice green.wav "أخضر"
+          make_voice purple.wav "بنفسجي"
+          make_voice apple.wav "تفاحة"
+          make_voice banana.wav "موز"
+          make_voice strawberry.wav "فراولة"
+          make_voice grapes.wav "عنب"
+          make_voice orange.wav "برتقال"
+          make_voice circle.wav "دائرة"
+          make_voice square.wav "مربع"
+          make_voice triangle.wav "مثلث"
+          make_voice star.wav "نجمة"
+          make_voice heart.wav "قلب"
+          ls -lh app/assets/audio/toddler
+
+      - name: Set up Flutter
+        id: flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.8"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        id: dependencies
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec > >(tee /tmp/stage12-dependencies.log) 2>&1
+          flutter create --no-pub --platforms=android,ios --org com.alhadi --project-name hamoodi .
+          rm -f test/widget_test.dart
+          sed -i 's/^  share_plus: .*/  share_plus: 12.0.2/' pubspec.yaml
+          sed -i 's/^  file_picker: .*/  file_picker: 10.3.10/' pubspec.yaml
+          flutter pub get
+
+      - name: Apply platform compatibility and icon
+        id: compatibility
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec > >(tee /tmp/stage12-compatibility.log) 2>&1
+          python3 ../.hamoudi-stage09-patch/patch_jni.py
+          python3 tool/prepare_platforms.py
+          sed -i 's/textDirection: TextDirection\.rtl/textDirection: ui.TextDirection.rtl/' lib/services/memory_book_service.dart
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            sed -i 's/FilePicker\.pickFiles/FilePicker.platform.pickFiles/g' "$file"
+          done < <(grep -RIl 'FilePicker\.pickFiles' lib || true)
+          dart run flutter_launcher_icons
+
+      - name: Analyze toddler source
+        id: analyze
+        working-directory: app
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze lib --no-fatal-infos --no-fatal-warnings 2>&1 | tee /tmp/stage12-analyze.log
+
+      - name: Build Stage 12 release APK
+        id: apk
+        working-directory: app
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee /tmp/stage12-build.log
+
+      - name: Publish Stage 12 APK
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp app/build/app/outputs/flutter-apk/app-release.apk Hamoudi-Stage12-v2.1.0-build12.apk
+          sha256sum Hamoudi-Stage12-v2.1.0-build12.apk > Hamoudi-Stage12-v2.1.0-build12.sha256
+          if gh release view hamoudi-stage12-latest >/dev/null 2>&1; then
+            gh release upload hamoudi-stage12-latest Hamoudi-Stage12-v2.1.0-build12.apk Hamoudi-Stage12-v2.1.0-build12.sha256 --clobber
+          else
+            gh release create hamoudi-stage12-latest Hamoudi-Stage12-v2.1.0-build12.apk Hamoudi-Stage12-v2.1.0-build12.sha256 \
+              --title "Hamoudi Stage 12 — Toddler Pictures and Arabic Sounds" \
+              --notes "Picture-first interface for a one-year-old child, oversized touch targets, icon-only navigation, animal/color/fruit/shape picture screens, and Arabic voice playback instead of reading." \
+              --prerelease --target hamoudi-full-build
+          fi
+          ls -lh Hamoudi-Stage12-v2.1.0-build12.apk | tee /tmp/stage12-release.log
+
+      - name: Record Stage 12 result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+          SOURCE: ${{ steps.source.outcome }}
+          VOICES: ${{ steps.voices.outcome }}
+          FLUTTER: ${{ steps.flutter.outcome }}
+          DEPENDENCIES: ${{ steps.dependencies.outcome }}
+          COMPATIBILITY: ${{ steps.compatibility.outcome }}
+          ANALYZE: ${{ steps.analyze.outcome }}
+          APK: ${{ steps.apk.outcome }}
+          RELEASE: ${{ steps.release.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "status=${JOB_STATUS}"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "source=${SOURCE}"
+            echo "voices=${VOICES}"
+            echo "flutter=${FLUTTER}"
+            echo "dependencies=${DEPENDENCIES}"
+            echo "compatibility=${COMPATIBILITY}"
+            echo "analyze=${ANALYZE}"
+            echo "apk=${APK}"
+            echo "release=${RELEASE}"
+            echo
+            for file in /tmp/stage12-*.log; do
+              if [ -f "$file" ]; then
+                echo "===== $(basename "$file") ====="
+                tail -n 200 "$file"
+                echo
+              fi
+            done
+          } > /tmp/stage12-latest.txt
+          encoded=$(base64 -w 0 /tmp/stage12-latest.txt)
+          target=".build-status/stage12-main-latest.txt"
+          current_sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/${target}?ref=main" --jq '.sha' 2>/dev/null || true)
+          if [ -n "$current_sha" ]; then
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${target}" -f message="Update Stage 12 build result [skip ci]" -f content="$encoded" -f sha="$current_sha" -f branch="main"
+          else
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${target}" -f message="Record Stage 12 build result [skip ci]" -f content="$encoded" -f branch="main"
+          fi
