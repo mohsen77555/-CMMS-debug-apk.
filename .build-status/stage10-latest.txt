@@ -1,6 +1,6 @@
 status=success
-run_id=30265655376
-commit=ce1d5811ec45cebe1569741ca96fdf364044ad4c
+run_id=30266239667
+commit=f6a684bbb38c79875e0ab2c5d6653a8ebc57d3a6
 source=success
 sounds=success
 flutter=success
@@ -30,7 +30,7 @@ warning • Unnecessary cast. Try removing the cast • lib/providers/security_p
    info • The import of 'package:cross_file/cross_file.dart' is unnecessary because all of the used elements are also provided by the import of 'package:share_plus/share_plus.dart'. Try removing the import directive • lib/services/family_share_service.dart:6:8 • unnecessary_import
    info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/services.dart'. Try removing the import directive • lib/services/memory_book_service.dart:2:8 • unnecessary_import
 
-16 issues found. (ran in 14.7s)
+16 issues found. (ran in 16.3s)
 
 ===== stage10-build.log =====
 Running Gradle task 'assembleRelease'...                        
@@ -51,7 +51,7 @@ Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
 "Install CMake 3.22.1 v.3.22.1" finished.
 Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 21516 bytes (98.7% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
 Caught exception: Already watching path: /home/runner/work/-CMMS-debug-apk./-CMMS-debug-apk./app/android
-Running Gradle task 'assembleRelease'...                          406.4s
+Running Gradle task 'assembleRelease'...                          436.4s
 ✓ Built build/app/outputs/flutter-apk/app-release.apk (66.8MB)
 
 ===== stage10-compatibility.log =====
@@ -235,7 +235,7 @@ Changed 154 dependencies!
 Try `flutter pub outdated` for more information.
 
 ===== stage10-release.log =====
--rw-r--r-- 1 runner runner 64M Jul 27 12:30 Hamoudi-Stage10-v1.9.0-build10.apk
+-rw-r--r-- 1 runner runner 64M Jul 27 12:39 Hamoudi-Stage10-v1.9.0-build10.apk
 
 ===== stage10-sounds.log =====
 cat.wav 31752
