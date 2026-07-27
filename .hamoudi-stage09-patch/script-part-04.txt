@@ -1,0 +1,41 @@
+7mgMMX4xy2n4q0JZt0Y5zg3dot3FyIeb8cXUYjVl8oA2PMLY13RBl7XDNelj3qHxN+3O3HNzmm1pZB2t6q+iZaYs7XZaGyV+Q2lw82bvtZM2pPZI1XRVnJv7wM3fkE67MALpgtlg7DsENHmL4sZXO9DlPj7uKUxBNGW2o1tra94J1cStaIbIpGKKcQcp+di3+QHjzAvpKLt+B6+ZknK8mG7VU1/INiTacl/YzDzoTHzbQQu4ZDBnR+lgg+y0voFXZqplw04kpjzYw1wEET70EBnIIcZHDeFPDCENA3Whb4dfgpsdEIJMBDA3Vlrdi3TAPmX/qpBNqLnWb/bfJI2ExXBlI5axtBmmHqoSi73Xo0xkrH46B4Zmn20EYKENNlQbLWtiI4TwO76oKutRN0prnZQZ+ZZr7ClDJPE+DyVR1kUrK59+anQiR8XH5TqXGWLzpr3fi1SkIhWpSEUqUpGKVKQiFalIRSpSkYpUpCIVqUhFKlKRilSkIhWpSEUqUpGKVKQiFel/N/0XOXaYuQBAAQA="""
+
+root = Path(sys.argv[1] if len(sys.argv) > 1 else "app").resolve()
+with tarfile.open(fileobj=io.BytesIO(base64.b64decode(PATCH_B64)), mode="r:gz") as archive:
+    archive.extractall(root)
+
+pubspec = root / "pubspec.yaml"
+text = pubspec.read_text(encoding="utf-8")
+text = text.replace("version: 1.7.0+8", "version: 1.8.0+9")
+text = text.replace("assets/icon/hamoodi_icon.png", "assets/icon/hamoodi_icon.jpg")
+if "    - assets/audio/" not in text:
+    text = text.replace("    - assets/icon/hamoodi_icon.jpg\n", "    - assets/icon/hamoodi_icon.jpg\n    - assets/audio/\n")
+pubspec.write_text(text, encoding="utf-8")
+
+(root / "assets" / "icon" / "hamoodi_icon.png").unlink(missing_ok=True)
+audio_dir = root / "assets" / "audio"
+audio_dir.mkdir(parents=True, exist_ok=True)
+
+def tone(name, freqs, duration=0.28, rate=22050, volume=0.35):
+    frames=[]
+    count=int(duration*rate)
+    for i in range(count):
+        t=i/rate
+        f=freqs[min(int(t/duration*len(freqs)), len(freqs)-1)]
+        env=min(1.0, t/0.02)*min(1.0, (duration-t)/0.06)
+        value=volume*env*math.sin(2*math.pi*f*t)
+        frames.append(struct.pack("<h", int(max(-1,min(1,value))*32767)))
+    with wave.open(str(audio_dir/name), "wb") as stream:
+        stream.setnchannels(1)
+        stream.setsampwidth(2)
+        stream.setframerate(rate)
+        stream.writeframes(b"".join(frames))
+
+tone("tap.wav", [520], 0.12, volume=0.25)
+tone("success.wav", [523.25,659.25,783.99], 0.48, volume=0.32)
+tone("sparkle.wav", [880,1174.66,1567.98], 0.35, volume=0.25)
+tone("pop.wav", [260,180], 0.16, volume=0.30)
+tone("wrong.wav", [220,180], 0.28, volume=0.22)
+tone("bell.wav", [659.25,987.77], 0.38, volume=0.28)
+
+print("Stage 09 patch applied to", root)
