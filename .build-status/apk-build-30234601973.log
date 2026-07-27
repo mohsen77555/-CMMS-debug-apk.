@@ -1,0 +1,20 @@
+Running Gradle task 'assembleRelease'...                        
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/home/runner/.pub-cache/hosted/pub.dev/jni-1.0.1/android/build.gradle' line: 84
+
+* What went wrong:
+A problem occurred evaluating project ':jni'.
+> Could not find method kotlin() for arguments [build_araq7t07vr0ny9f0cy94q96my$_run_closure3@1b2b7bbe] on project ':jni' of type org.gradle.api.Project.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2m 27s
+Running Gradle task 'assembleRelease'...                          147.9s
+Gradle task assembleRelease failed with exit code 1
