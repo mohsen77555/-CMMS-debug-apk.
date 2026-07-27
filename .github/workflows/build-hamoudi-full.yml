@@ -1,0 +1,165 @@
+name: Build Hamoudi Stage 09 APK
+
+on:
+  pull_request:
+    paths:
+      - ".hamoudi-stage09-trigger/**"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Hamoudi children UI and games
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reconstruct Stage 09 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p app
+          cat .hamoudi-stage09-source/part-*.b64 | base64 --decode > /tmp/hamoudi-stage09.tar.xz
+          echo "8fac3b139729fda45567ac16c17218cdea22a47c90f4d404eec901f4756571b7  /tmp/hamoudi-stage09.tar.xz" | sha256sum -c -
+          xz -t /tmp/hamoudi-stage09.tar.xz
+          tar -xJf /tmp/hamoudi-stage09.tar.xz -C app
+          test -f app/pubspec.yaml
+          test -f app/lib/main.dart
+          test -f app/assets/icon/hamoodi_icon.jpg
+          test -f app/lib/screens/games_hub_screen.dart
+          test -f app/lib/screens/learning_cards_game_screen.dart
+
+      - name: Set up Flutter 3.44.8
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.8"
+          channel: stable
+          cache: true
+
+      - name: Create Android and iOS platform files
+        working-directory: app
+        run: flutter create --no-pub --platforms=android,ios --org com.alhadi --project-name hamoodi .
+
+      - name: Install Flutter dependencies
+        working-directory: app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          sed -i 's/^  share_plus: .*/  share_plus: 12.0.2/' pubspec.yaml
+          sed -i 's/^  file_picker: .*/  file_picker: 10.3.10/' pubspec.yaml
+          flutter pub get 2>&1 | tee /tmp/hamoudi-stage09-pub-get.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            encoded=$(base64 -w 0 /tmp/hamoudi-stage09-pub-get.log)
+            gh api --method PUT \
+              "repos/${GITHUB_REPOSITORY}/contents/.build-status/stage09-pub-get-${GITHUB_RUN_ID}.log" \
+              -f message="Record Stage 09 dependency error [skip ci]" \
+              -f content="$encoded" \
+              -f branch="main"
+            exit "$status"
+          fi
+
+      - name: Patch dependency and source compatibility
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          paths = list(Path.home().glob('.pub-cache/hosted/pub.dev/jni-*/android/build.gradle'))
+          for path in paths:
+              lines = path.read_text(encoding='utf-8').splitlines(keepends=True)
+              output = []
+              skipping = False
+              depth = 0
+              for line in lines:
+                  stripped = line.strip()
+                  if not skipping and stripped.startswith('kotlin') and '{' in stripped:
+                      skipping = True
+                      depth = line.count('{') - line.count('}')
+                      if depth <= 0:
+                          skipping = False
+                      continue
+                  if skipping:
+                      depth += line.count('{') - line.count('}')
+                      if depth <= 0:
+                          skipping = False
+                      continue
+                  output.append(line)
+              path.write_text(''.join(output), encoding='utf-8')
+          PY
+          python3 tool/prepare_platforms.py
+          sed -i 's/textDirection: TextDirection\.rtl/textDirection: ui.TextDirection.rtl/' lib/services/memory_book_service.dart
+          grep -RIl 'FilePicker\.pickFiles' lib | while read -r file; do
+            sed -i 's/FilePicker\.pickFiles/FilePicker.platform.pickFiles/g' "$file"
+          done
+
+      - name: Generate official launcher icons
+        working-directory: app
+        run: dart run flutter_launcher_icons
+
+      - name: Analyze Stage 09 source
+        working-directory: app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          flutter analyze 2>&1 | tee /tmp/hamoudi-stage09-analyze.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            encoded=$(base64 -w 0 /tmp/hamoudi-stage09-analyze.log)
+            gh api --method PUT \
+              "repos/${GITHUB_REPOSITORY}/contents/.build-status/stage09-analyze-${GITHUB_RUN_ID}.log" \
+              -f message="Record Stage 09 analysis error [skip ci]" \
+              -f content="$encoded" \
+              -f branch="main"
+            exit "$status"
+          fi
+
+      - name: Build Stage 09 release APK
+        working-directory: app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          flutter build apk --release 2>&1 | tee /tmp/hamoudi-stage09-build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            encoded=$(base64 -w 0 /tmp/hamoudi-stage09-build.log)
+            gh api --method PUT \
+              "repos/${GITHUB_REPOSITORY}/contents/.build-status/stage09-build-${GITHUB_RUN_ID}.log" \
+              -f message="Record Stage 09 APK build error [skip ci]" \
+              -f content="$encoded" \
+              -f branch="main"
+            exit "$status"
+          fi
+
+      - name: Prepare Stage 09 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp app/build/app/outputs/flutter-apk/app-release.apk Hamoudi-Stage09-v1.8.0-build9.apk
+          sha256sum Hamoudi-Stage09-v1.8.0-build9.apk > Hamoudi-Stage09-v1.8.0-build9.sha256
+          ls -lh Hamoudi-Stage09-v1.8.0-build9.apk
+
+      - name: Publish Stage 09 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view hamoudi-stage09-latest >/dev/null 2>&1; then
+            gh release upload hamoudi-stage09-latest Hamoudi-Stage09-v1.8.0-build9.apk Hamoudi-Stage09-v1.8.0-build9.sha256 --clobber
+          else
+            gh release create hamoudi-stage09-latest Hamoudi-Stage09-v1.8.0-build9.apk Hamoudi-Stage09-v1.8.0-build9.sha256 \
+              --title "Hamoudi Stage 09 — Children UI and Educational Games" \
+              --notes "Stage 09 adds the approved child-friendly interface, official icon, educational games, sounds, favorites, and the redesigned memories timeline." \
+              --prerelease --target "${GITHUB_SHA}"
+          fi
