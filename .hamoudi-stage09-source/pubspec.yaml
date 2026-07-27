@@ -1,0 +1,57 @@
+name: hamoodi
+description: تطبيق حمودي لحفظ ذكريات الطفل وعرض "في مثل هذا اليوم".
+publish_to: "none"
+version: 1.8.0+9
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: 1.0.8
+  provider: 6.1.5+1
+  sqflite: 2.4.2+1
+  path: 1.9.1
+  path_provider: 2.1.6
+  image_picker: 1.2.3
+  shared_preferences: 2.5.5
+  uuid: 4.6.0
+  intl: 0.20.2
+  archive: 4.0.9
+  crypto: 3.0.7
+  file_picker: 11.0.2
+  share_plus: 13.3.0
+  cross_file: 0.3.5+4
+  local_auth: 3.0.2
+  flutter_secure_storage: 10.3.1
+  video_player: 2.13.0
+  record: 6.2.1
+  audioplayers: 6.8.1
+  flutter_local_notifications: 22.2.0
+  timezone: 0.11.1
+  flutter_timezone: 5.1.0
+  pdf: 3.13.0
+  printing: 5.15.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 6.0.0
+  flutter_launcher_icons: 0.14.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/hamoodi_icon.jpg
+    - assets/audio/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icon/hamoodi_icon.jpg
+  adaptive_icon_background: "#0E1726"
+  adaptive_icon_foreground: assets/icon/hamoodi_icon.jpg
+  remove_alpha_ios: true
