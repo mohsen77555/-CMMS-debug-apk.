@@ -25,28 +25,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          {
-            mkdir -p app
-            cat \
-              .hamoudi-full-source/part-00.b64 \
-              .hamoudi-full-source/part-01.b64 \
-              .hamoudi-full-source/part-02.b64 \
-              .hamoudi-full-source/part-030.b64 \
-              .hamoudi-full-source/part-031.b64 \
-              .hamoudi-full-source/part-04.b64 \
-              | base64 --decode > /tmp/hamoudi-full.tar.xz
-            echo "26adc13b69d441a3eed6205b6ef9e1a72c4f621b4982e2c84d377c38dd5f1935  /tmp/hamoudi-full.tar.xz" | sha256sum -c -
-            tar -xJf /tmp/hamoudi-full.tar.xz -C app
-            cat .hamoudi-stage09-patch/script-part-*.txt > /tmp/apply_stage09.py
-            echo "f16450519656b898d7a64139dc2375a15440baae3bba090a88da100c728e0150  /tmp/apply_stage09.py" | sha256sum -c -
-            python3 /tmp/apply_stage09.py app
-            mkdir -p app/assets/icon
-            base64 --decode .hamoudi-stage09-icon/icon.b64 > app/assets/icon/hamoodi_icon.jpg
-            echo "1280133c60acce188712d202db7b3d671d5cc33fadac2cbf3d5799e5053c2e4a  app/assets/icon/hamoodi_icon.jpg" | sha256sum -c -
-            rm -f app/test/widget_test.dart
-            grep -n '^version:' app/pubspec.yaml
-          } 2>&1 | tee /tmp/stage09-v2-source.log
-
+          mkdir -p app
+          cat \
+            .hamoudi-full-source/part-00.b64 \
+            .hamoudi-full-source/part-01.b64 \
+            .hamoudi-full-source/part-02.b64 \
+            .hamoudi-full-source/part-030.b64 \
+            .hamoudi-full-source/part-031.b64 \
+            .hamoudi-full-source/part-04.b64 \
+            | base64 --decode > /tmp/hamoudi-full.tar.xz
+          echo "26adc13b69d441a3eed6205b6ef9e1a72c4f621b4982e2c84d377c38dd5f1935  /tmp/hamoudi-full.tar.xz" | sha256sum -c -
+          tar -xJf /tmp/hamoudi-full.tar.xz -C app
+          cat .hamoudi-stage09-patch/script-part-*.txt > /tmp/apply_stage09.py
+          echo "f16450519656b898d7a64139dc2375a15440baae3bba090a88da100c728e0150  /tmp/apply_stage09.py" | sha256sum -c -
+          python3 /tmp/apply_stage09.py app
+          mkdir -p app/assets/icon
+          base64 --decode .hamoudi-stage09-icon/icon.b64 > app/assets/icon/hamoodi_icon.jpg
+          echo "1280133c60acce188712d202db7b3d671d5cc33fadac2cbf3d5799e5053c2e4a  app/assets/icon/hamoodi_icon.jpg" | sha256sum -c -
+          rm -f app/test/widget_test.dart
+          grep -n '^version:' app/pubspec.yaml
+        
       - name: Set up Flutter 3.44.8
         id: flutter
         uses: subosito/flutter-action@v2
@@ -61,13 +59,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          {
-            flutter create --no-pub --platforms=android,ios --org com.alhadi --project-name hamoodi .
-            rm -f test/widget_test.dart
-            sed -i 's/^  share_plus: .*/  share_plus: 12.0.2/' pubspec.yaml
-            sed -i 's/^  file_picker: .*/  file_picker: 10.3.10/' pubspec.yaml
-            flutter pub get
-          } 2>&1 | tee /tmp/stage09-v2-dependencies.log
+          exec > >(tee /tmp/stage09-v2-dependencies.log) 2>&1
+          flutter create --no-pub --platforms=android,ios --org com.alhadi --project-name hamoodi .
+          rm -f test/widget_test.dart
+          sed -i 's/^  share_plus: .*/  share_plus: 12.0.2/' pubspec.yaml
+          sed -i 's/^  file_picker: .*/  file_picker: 10.3.10/' pubspec.yaml
+          flutter pub get
 
       - name: Apply Android and source compatibility fixes
         id: compatibility
@@ -75,45 +72,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          {
-            python3 - <<'PY'
-            from pathlib import Path
-            paths = list(Path.home().glob('.pub-cache/hosted/pub.dev/jni-*/android/build.gradle'))
-            if not paths:
-                raise SystemExit('JNI Android Gradle file was not found')
-            for path in paths:
-                lines = path.read_text(encoding='utf-8').splitlines(keepends=True)
-                output = []
-                skipping = False
-                depth = 0
-                removed = False
-                for line in lines:
-                    stripped = line.strip()
-                    if not skipping and stripped.startswith('kotlin') and '{' in stripped:
-                        skipping = True
-                        depth = line.count('{') - line.count('}')
-                        removed = True
-                        if depth <= 0:
-                            skipping = False
-                        continue
-                    if skipping:
-                        depth += line.count('{') - line.count('}')
-                        if depth <= 0:
-                            skipping = False
-                        continue
-                    output.append(line)
-                if not removed:
-                    raise SystemExit(f'No Kotlin block found in {path}')
-                path.write_text(''.join(output), encoding='utf-8')
-            PY
-            python3 tool/prepare_platforms.py
-            sed -i 's/textDirection: TextDirection\.rtl/textDirection: ui.TextDirection.rtl/' lib/services/memory_book_service.dart
-            while IFS= read -r file; do
-              [ -n "$file" ] || continue
-              sed -i 's/FilePicker\.pickFiles/FilePicker.platform.pickFiles/g' "$file"
-            done < <(grep -RIl 'FilePicker\.pickFiles' lib || true)
-            dart run flutter_launcher_icons
-          } 2>&1 | tee /tmp/stage09-v2-compatibility.log
+          exec > >(tee /tmp/stage09-v2-compatibility.log) 2>&1
+          python3 ../.hamoudi-stage09-patch/patch_jni.py
+          python3 tool/prepare_platforms.py
+          sed -i 's/textDirection: TextDirection\.rtl/textDirection: ui.TextDirection.rtl/' lib/services/memory_book_service.dart
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            sed -i 's/FilePicker\.pickFiles/FilePicker.platform.pickFiles/g' "$file"
+          done < <(grep -RIl 'FilePicker\.pickFiles' lib || true)
+          dart run flutter_launcher_icons
 
       - name: Analyze application source
         id: analyze
@@ -180,7 +147,7 @@ jobs:
             for file in /tmp/stage09-v2-*.log; do
               if [ -f "$file" ]; then
                 echo "===== $(basename "$file") ====="
-                tail -n 120 "$file"
+                tail -n 150 "$file"
                 echo
               fi
             done
