@@ -1,0 +1,9 @@
+Resolving dependencies...
+Because share_plus >=13.1.0 depends on win32 ^6.0.1 and file_picker >=8.3.3 <12.0.0-beta.1 depends on win32 ^5.9.0, share_plus >=13.1.0 is incompatible with file_picker >=8.3.3 <12.0.0-beta.1.
+So, because hamoodi depends on both file_picker 11.0.2 and share_plus 13.3.0, version solving failed.
+
+
+You can try one of the following suggestions to make the pubspec resolve:
+* Consider downgrading your constraint on share_plus: flutter pub add share_plus:^12.0.2
+* Consider downgrading your constraint on file_picker: flutter pub add file_picker:^3.0.4
+Failed to update packages.
