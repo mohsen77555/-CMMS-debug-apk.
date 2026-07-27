@@ -1,0 +1,1 @@
+Retry corrected Hamoudi Stage 09 after making the FilePicker compatibility step idempotent.
