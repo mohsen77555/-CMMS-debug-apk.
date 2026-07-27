@@ -21,43 +21,50 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Reconstruct verified Stage 08 source
+        id: reconstruct
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p app
-          cat \
-            .hamoudi-full-source/part-00.b64 \
-            .hamoudi-full-source/part-01.b64 \
-            .hamoudi-full-source/part-02.b64 \
-            .hamoudi-full-source/part-030.b64 \
-            .hamoudi-full-source/part-031.b64 \
-            .hamoudi-full-source/part-04.b64 \
-            | base64 --decode > /tmp/hamoudi-full.tar.xz
-          echo "26adc13b69d441a3eed6205b6ef9e1a72c4f621b4982e2c84d377c38dd5f1935  /tmp/hamoudi-full.tar.xz" | sha256sum -c -
-          xz -t /tmp/hamoudi-full.tar.xz
-          tar -xJf /tmp/hamoudi-full.tar.xz -C app
-          test -f app/pubspec.yaml
-          test -f app/lib/main.dart
+          {
+            mkdir -p app
+            cat \
+              .hamoudi-full-source/part-00.b64 \
+              .hamoudi-full-source/part-01.b64 \
+              .hamoudi-full-source/part-02.b64 \
+              .hamoudi-full-source/part-030.b64 \
+              .hamoudi-full-source/part-031.b64 \
+              .hamoudi-full-source/part-04.b64 \
+              | base64 --decode > /tmp/hamoudi-full.tar.xz
+            echo "26adc13b69d441a3eed6205b6ef9e1a72c4f621b4982e2c84d377c38dd5f1935  /tmp/hamoudi-full.tar.xz" | sha256sum -c -
+            xz -t /tmp/hamoudi-full.tar.xz
+            tar -xJf /tmp/hamoudi-full.tar.xz -C app
+            test -f app/pubspec.yaml
+            test -f app/lib/main.dart
+          } 2>&1 | tee /tmp/stage09-reconstruct.log
 
       - name: Apply Stage 09 program changes
+        id: patch
         shell: bash
         run: |
           set -euo pipefail
-          cat .hamoudi-stage09-patch/script-part-*.txt > /tmp/apply_stage09.py
-          echo "f16450519656b898d7a64139dc2375a15440baae3bba090a88da100c728e0150  /tmp/apply_stage09.py" | sha256sum -c -
-          python3 /tmp/apply_stage09.py app
-          mkdir -p app/assets/icon
-          base64 --decode .hamoudi-stage09-icon/icon.b64 > app/assets/icon/hamoodi_icon.jpg
-          echo "1280133c60acce188712d202db7b3d671d5cc33fadac2cbf3d5799e5053c2e4a  app/assets/icon/hamoodi_icon.jpg" | sha256sum -c -
-          test -f app/lib/screens/home_screen.dart
-          test -f app/lib/screens/games_hub_screen.dart
-          test -f app/lib/screens/learning_cards_game_screen.dart
-          test -f app/lib/screens/sound_playground_screen.dart
-          test -f app/lib/screens/memories_screen.dart
-          test -f app/lib/screens/main_shell.dart
-          grep -n '^version:' app/pubspec.yaml
+          {
+            cat .hamoudi-stage09-patch/script-part-*.txt > /tmp/apply_stage09.py
+            echo "f16450519656b898d7a64139dc2375a15440baae3bba090a88da100c728e0150  /tmp/apply_stage09.py" | sha256sum -c -
+            python3 /tmp/apply_stage09.py app
+            mkdir -p app/assets/icon
+            base64 --decode .hamoudi-stage09-icon/icon.b64 > app/assets/icon/hamoodi_icon.jpg
+            echo "1280133c60acce188712d202db7b3d671d5cc33fadac2cbf3d5799e5053c2e4a  app/assets/icon/hamoodi_icon.jpg" | sha256sum -c -
+            test -f app/lib/screens/home_screen.dart
+            test -f app/lib/screens/games_hub_screen.dart
+            test -f app/lib/screens/learning_cards_game_screen.dart
+            test -f app/lib/screens/sound_playground_screen.dart
+            test -f app/lib/screens/memories_screen.dart
+            test -f app/lib/screens/main_shell.dart
+            grep -n '^version:' app/pubspec.yaml
+          } 2>&1 | tee /tmp/stage09-patch.log
 
       - name: Set up Flutter 3.44.8
+        id: flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.44.8"
@@ -65,23 +72,29 @@ jobs:
           cache: true
 
       - name: Create Android and iOS platform files
+        id: platforms
         working-directory: app
-        run: flutter create --no-pub --platforms=android,ios --org com.alhadi --project-name hamoodi .
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter create --no-pub --platforms=android,ios --org com.alhadi --project-name hamoodi . 2>&1 | tee /tmp/stage09-platforms.log
 
       - name: Install Flutter dependencies
+        id: dependencies
         working-directory: app
         shell: bash
         run: |
           set -euo pipefail
           sed -i 's/^  share_plus: .*/  share_plus: 12.0.2/' pubspec.yaml
           sed -i 's/^  file_picker: .*/  file_picker: 10.3.10/' pubspec.yaml
-          flutter pub get
+          flutter pub get 2>&1 | tee /tmp/stage09-dependencies.log
 
       - name: Patch JNI Gradle compatibility
+        id: jni
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
+          python3 - <<'PY' 2>&1 | tee /tmp/stage09-jni.log
           from pathlib import Path
           paths = list(Path.home().glob('.pub-cache/hosted/pub.dev/jni-*/android/build.gradle'))
           if not paths:
@@ -114,37 +127,54 @@ jobs:
           PY
 
       - name: Apply platform compatibility configuration
+        id: compatibility
         working-directory: app
         shell: bash
         run: |
           set -euo pipefail
-          python3 tool/prepare_platforms.py
-          sed -i 's/textDirection: TextDirection\.rtl/textDirection: ui.TextDirection.rtl/' lib/services/memory_book_service.dart
-          grep -RIl 'FilePicker\.pickFiles' lib | while read -r file; do
-            sed -i 's/FilePicker\.pickFiles/FilePicker.platform.pickFiles/g' "$file"
-          done
+          {
+            python3 tool/prepare_platforms.py
+            sed -i 's/textDirection: TextDirection\.rtl/textDirection: ui.TextDirection.rtl/' lib/services/memory_book_service.dart
+            grep -RIl 'FilePicker\.pickFiles' lib | while read -r file; do
+              sed -i 's/FilePicker\.pickFiles/FilePicker.platform.pickFiles/g' "$file"
+            done
+          } 2>&1 | tee /tmp/stage09-compatibility.log
 
       - name: Generate approved launcher icons
+        id: icons
         working-directory: app
-        run: dart run flutter_launcher_icons
+        shell: bash
+        run: |
+          set -o pipefail
+          dart run flutter_launcher_icons 2>&1 | tee /tmp/stage09-icons.log
 
       - name: Analyze Stage 09 source
+        id: analyze
         working-directory: app
-        run: flutter analyze
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee /tmp/stage09-analyze.log
 
       - name: Build Stage 09 release APK
+        id: apk
         working-directory: app
-        run: flutter build apk --release
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee /tmp/stage09-build.log
 
       - name: Prepare Stage 09 APK
+        id: prepare
         shell: bash
         run: |
           set -euo pipefail
           cp app/build/app/outputs/flutter-apk/app-release.apk Hamoudi-Stage09-v1.8.0-build9.apk
           sha256sum Hamoudi-Stage09-v1.8.0-build9.apk > Hamoudi-Stage09-v1.8.0-build9.sha256
-          ls -lh Hamoudi-Stage09-v1.8.0-build9.apk
+          ls -lh Hamoudi-Stage09-v1.8.0-build9.apk | tee /tmp/stage09-prepare.log
 
       - name: Publish Stage 09 release
+        id: release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -157,4 +187,66 @@ jobs:
               --title "Hamoudi Stage 09 — Children UI and Educational Games" \
               --notes "Stage 09 implements the approved child-friendly interface, approved Hamoudi icon, educational games, local sounds, favorites, and redesigned memories screens." \
               --prerelease --target "${GITHUB_SHA}"
+          fi
+
+      - name: Record Stage 09 build result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+          RECONSTRUCT: ${{ steps.reconstruct.outcome }}
+          PATCH: ${{ steps.patch.outcome }}
+          FLUTTER: ${{ steps.flutter.outcome }}
+          PLATFORMS: ${{ steps.platforms.outcome }}
+          DEPENDENCIES: ${{ steps.dependencies.outcome }}
+          JNI: ${{ steps.jni.outcome }}
+          COMPATIBILITY: ${{ steps.compatibility.outcome }}
+          ICONS: ${{ steps.icons.outcome }}
+          ANALYZE: ${{ steps.analyze.outcome }}
+          APK: ${{ steps.apk.outcome }}
+          PREPARE: ${{ steps.prepare.outcome }}
+          RELEASE: ${{ steps.release.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "status=${JOB_STATUS}"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "commit=${GITHUB_SHA}"
+            echo "reconstruct=${RECONSTRUCT}"
+            echo "patch=${PATCH}"
+            echo "flutter=${FLUTTER}"
+            echo "platforms=${PLATFORMS}"
+            echo "dependencies=${DEPENDENCIES}"
+            echo "jni=${JNI}"
+            echo "compatibility=${COMPATIBILITY}"
+            echo "icons=${ICONS}"
+            echo "analyze=${ANALYZE}"
+            echo "apk=${APK}"
+            echo "prepare=${PREPARE}"
+            echo "release=${RELEASE}"
+            echo
+            for file in /tmp/stage09-*.log; do
+              if [ -f "$file" ]; then
+                echo "===== $(basename "$file") ====="
+                tail -n 100 "$file"
+                echo
+              fi
+            done
+          } > /tmp/stage09-latest.txt
+
+          path=".build-status/stage09-latest.txt"
+          encoded=$(base64 -w 0 /tmp/stage09-latest.txt)
+          current_sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/${path}?ref=hamoudi-full-build" --jq '.sha' 2>/dev/null || true)
+          if [ -n "$current_sha" ]; then
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${path}" \
+              -f message="Update Stage 09 build result [skip ci]" \
+              -f content="$encoded" \
+              -f sha="$current_sha" \
+              -f branch="hamoudi-full-build"
+          else
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${path}" \
+              -f message="Record Stage 09 build result [skip ci]" \
+              -f content="$encoded" \
+              -f branch="hamoudi-full-build"
           fi
