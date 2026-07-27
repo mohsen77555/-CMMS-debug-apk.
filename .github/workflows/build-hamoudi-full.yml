@@ -137,14 +137,16 @@ jobs:
 
               path.write_text(''.join(output), encoding='utf-8')
               print(f'Removed incompatible Kotlin block from {path}')
-              for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), start=1):
-                  if 74 <= number <= 92:
-                      print(f'{number}: {line}')
           PY
 
-      - name: Apply platform configuration
+      - name: Apply platform and source compatibility configuration
         working-directory: app
-        run: python3 tool/prepare_platforms.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tool/prepare_platforms.py
+          sed -i 's/textDirection: TextDirection\.rtl/textDirection: ui.TextDirection.rtl/' lib/services/memory_book_service.dart
+          grep -n 'textDirection:' lib/services/memory_book_service.dart
 
       - name: Generate launcher icons
         working-directory: app
