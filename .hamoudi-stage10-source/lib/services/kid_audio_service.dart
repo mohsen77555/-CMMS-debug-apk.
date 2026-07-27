@@ -25,7 +25,7 @@ class KidAudioService {
     final prefs = await SharedPreferences.getInstance();
     _soundEnabled = prefs.getBool(_soundKey) ?? true;
     _hapticEnabled = prefs.getBool(_hapticKey) ?? true;
-    _volume = (prefs.getDouble(_volumeKey) ?? 0.78).clamp(0.0, 1.0);
+    _volume = (prefs.getDouble(_volumeKey) ?? 0.78).clamp(0.0, 1.0).toDouble();
   }
 
   Future<void> setSoundEnabled(bool value) async {
@@ -42,7 +42,7 @@ class KidAudioService {
   }
 
   Future<void> setVolume(double value) async {
-    _volume = value.clamp(0.0, 1.0);
+    _volume = value.clamp(0.0, 1.0).toDouble();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_volumeKey, _volume);
   }
