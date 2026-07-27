@@ -1,0 +1,82 @@
+name: Inspect Hamoudi Stage 09 source
+
+on:
+  push:
+    branches:
+      - hamoudi-full-build
+    paths:
+      - ".hamoudi-inspect-trigger/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reconstruct Stage 09 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p app
+          cat \
+            .hamoudi-full-source/part-00.b64 \
+            .hamoudi-full-source/part-01.b64 \
+            .hamoudi-full-source/part-02.b64 \
+            .hamoudi-full-source/part-030.b64 \
+            .hamoudi-full-source/part-031.b64 \
+            .hamoudi-full-source/part-04.b64 \
+            | base64 --decode > /tmp/hamoudi-full.tar.xz
+          tar -xJf /tmp/hamoudi-full.tar.xz -C app
+          cat .hamoudi-stage09-patch/script-part-*.txt > /tmp/apply_stage09.py
+          python3 /tmp/apply_stage09.py app
+
+      - name: Export source map and key screens
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/inspect
+          {
+            echo "===== FILES ====="
+            find app/lib -type f | sort
+            echo
+            echo "===== ROUTES AND CLASSES ====="
+            grep -R -nE "class .*Screen|routes:|GoRoute|Navigator|onGenerateRoute" app/lib | head -n 500 || true
+          } > /tmp/inspect/source-map.txt
+
+          for path in \
+            app/lib/main.dart \
+            app/lib/theme/app_theme.dart \
+            app/lib/screens/home_screen.dart \
+            app/lib/screens/educational_games_screen.dart \
+            app/lib/screens/memories_screen.dart \
+            app/lib/screens/on_this_day_screen.dart \
+            app/lib/screens/favorites_screen.dart \
+            app/lib/screens/more_screen.dart; do
+            if [ -f "$path" ]; then
+              cp "$path" "/tmp/inspect/$(basename "$path")"
+            fi
+          done
+
+          tar -czf /tmp/hamoudi-stage09-inspect.tar.gz -C /tmp/inspect .
+          split -b 50000 -d -a 2 /tmp/hamoudi-stage09-inspect.tar.gz /tmp/inspect-part-
+          for part in /tmp/inspect-part-*; do
+            name=$(basename "$part")
+            encoded=$(base64 -w 0 "$part")
+            target=".hamoudi-stage09-inspect/${name}.b64"
+            sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/${target}?ref=hamoudi-full-build" --jq '.sha' 2>/dev/null || true)
+            if [ -n "$sha" ]; then
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${target}" -f message="Update Stage 09 inspection data [skip ci]" -f content="$encoded" -f sha="$sha" -f branch="hamoudi-full-build"
+            else
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${target}" -f message="Add Stage 09 inspection data [skip ci]" -f content="$encoded" -f branch="hamoudi-full-build"
+            fi
+          done
+
+          listing=$(base64 -w 0 /tmp/inspect/source-map.txt)
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/.hamoudi-stage09-inspect/source-map.txt" -f message="Add Stage 09 source map [skip ci]" -f content="$listing" -f branch="hamoudi-full-build" || true
