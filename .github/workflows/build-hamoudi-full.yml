@@ -101,24 +101,45 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import re
           from pathlib import Path
+
           paths = list(Path.home().glob('.pub-cache/hosted/pub.dev/jni-*/android/build.gradle'))
           if not paths:
               raise SystemExit('JNI Android Gradle file was not found')
+
           for path in paths:
-              text = path.read_text(encoding='utf-8')
-              updated, count = re.subn(
-                  r'\nkotlin\s*\{\s*jvmToolchain\(17\)\s*\}\s*',
-                  '\n',
-                  text,
-                  flags=re.MULTILINE,
-              )
-              if count:
-                  path.write_text(updated, encoding='utf-8')
-                  print(f'Patched {path}')
-              else:
-                  print(f'No JNI toolchain block required patching in {path}')
+              lines = path.read_text(encoding='utf-8').splitlines(keepends=True)
+              output = []
+              skipping = False
+              depth = 0
+              removed = False
+
+              for line in lines:
+                  stripped = line.strip()
+                  if not skipping and stripped.startswith('kotlin') and '{' in stripped:
+                      skipping = True
+                      depth = line.count('{') - line.count('}')
+                      removed = True
+                      if depth <= 0:
+                          skipping = False
+                      continue
+
+                  if skipping:
+                      depth += line.count('{') - line.count('}')
+                      if depth <= 0:
+                          skipping = False
+                      continue
+
+                  output.append(line)
+
+              if not removed:
+                  raise SystemExit(f'No top-level Kotlin toolchain block found in {path}')
+
+              path.write_text(''.join(output), encoding='utf-8')
+              print(f'Removed incompatible Kotlin block from {path}')
+              for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), start=1):
+                  if 74 <= number <= 92:
+                      print(f'{number}: {line}')
           PY
 
       - name: Apply platform configuration
