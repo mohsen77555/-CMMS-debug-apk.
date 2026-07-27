@@ -29,8 +29,8 @@ for path in paths:
 
         output.append(line)
 
-    if not removed:
-        raise SystemExit(f'No Kotlin block found in {path}')
-
-    path.write_text(''.join(output), encoding='utf-8')
-    print(f'Removed incompatible Kotlin block from {path}')
+    if removed:
+        path.write_text(''.join(output), encoding='utf-8')
+        print(f'Removed incompatible Kotlin block from {path}')
+    else:
+        print(f'JNI Kotlin block already compatible in {path}')
