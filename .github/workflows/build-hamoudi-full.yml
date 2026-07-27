@@ -72,15 +72,21 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Create Android platform and install dependencies
+      - name: Create Android and iOS platform files
         working-directory: app
-        shell: bash
-        run: |
-          set -euo pipefail
-          flutter create --platforms=android --org com.alhadi --project-name hamoodi .
-          flutter pub get
-          python3 tool/prepare_platforms.py
-          dart run flutter_launcher_icons
+        run: flutter create --platforms=android,ios --org com.alhadi --project-name hamoodi .
+
+      - name: Install Flutter dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Apply platform configuration
+        working-directory: app
+        run: python3 tool/prepare_platforms.py
+
+      - name: Generate launcher icons
+        working-directory: app
+        run: dart run flutter_launcher_icons
 
       - name: Analyze source
         working-directory: app
