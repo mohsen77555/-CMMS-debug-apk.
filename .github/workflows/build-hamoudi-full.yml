@@ -1,9 +1,12 @@
 name: Build Hamoudi Stage 09 APK
 
 on:
-  pull_request:
+  push:
+    branches:
+      - hamoudi-full-build
     paths:
       - ".hamoudi-stage09-trigger/**"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -36,7 +39,7 @@ jobs:
           test -f app/pubspec.yaml
           test -f app/lib/main.dart
 
-      - name: Apply Stage 09 interface, games, memories, and sounds
+      - name: Apply Stage 09 program changes
         shell: bash
         run: |
           set -euo pipefail
@@ -67,24 +70,12 @@ jobs:
 
       - name: Install Flutter dependencies
         working-directory: app
-        env:
-          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          set +e
+          set -euo pipefail
           sed -i 's/^  share_plus: .*/  share_plus: 12.0.2/' pubspec.yaml
           sed -i 's/^  file_picker: .*/  file_picker: 10.3.10/' pubspec.yaml
-          flutter pub get 2>&1 | tee /tmp/hamoudi-stage09-pub-get.log
-          status=${PIPESTATUS[0]}
-          if [ "$status" -ne 0 ]; then
-            encoded=$(base64 -w 0 /tmp/hamoudi-stage09-pub-get.log)
-            gh api --method PUT \
-              "repos/${GITHUB_REPOSITORY}/contents/.build-status/stage09-pub-get-${GITHUB_RUN_ID}.log" \
-              -f message="Record Stage 09 dependency error [skip ci]" \
-              -f content="$encoded" \
-              -f branch="main"
-            exit "$status"
-          fi
+          flutter pub get
 
       - name: Patch JNI Gradle compatibility
         shell: bash
@@ -122,7 +113,7 @@ jobs:
               print(f'Removed incompatible Kotlin block from {path}')
           PY
 
-      - name: Apply platform and source compatibility configuration
+      - name: Apply platform compatibility configuration
         working-directory: app
         shell: bash
         run: |
@@ -133,47 +124,17 @@ jobs:
             sed -i 's/FilePicker\.pickFiles/FilePicker.platform.pickFiles/g' "$file"
           done
 
-      - name: Generate official launcher icons
+      - name: Generate approved launcher icons
         working-directory: app
         run: dart run flutter_launcher_icons
 
       - name: Analyze Stage 09 source
         working-directory: app
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set +e
-          flutter analyze 2>&1 | tee /tmp/hamoudi-stage09-analyze.log
-          status=${PIPESTATUS[0]}
-          if [ "$status" -ne 0 ]; then
-            encoded=$(base64 -w 0 /tmp/hamoudi-stage09-analyze.log)
-            gh api --method PUT \
-              "repos/${GITHUB_REPOSITORY}/contents/.build-status/stage09-analyze-${GITHUB_RUN_ID}.log" \
-              -f message="Record Stage 09 analysis error [skip ci]" \
-              -f content="$encoded" \
-              -f branch="main"
-            exit "$status"
-          fi
+        run: flutter analyze
 
       - name: Build Stage 09 release APK
         working-directory: app
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set +e
-          flutter build apk --release 2>&1 | tee /tmp/hamoudi-stage09-build.log
-          status=${PIPESTATUS[0]}
-          if [ "$status" -ne 0 ]; then
-            encoded=$(base64 -w 0 /tmp/hamoudi-stage09-build.log)
-            gh api --method PUT \
-              "repos/${GITHUB_REPOSITORY}/contents/.build-status/stage09-build-${GITHUB_RUN_ID}.log" \
-              -f message="Record Stage 09 APK build error [skip ci]" \
-              -f content="$encoded" \
-              -f branch="main"
-            exit "$status"
-          fi
+        run: flutter build apk --release
 
       - name: Prepare Stage 09 APK
         shell: bash
@@ -194,6 +155,6 @@ jobs:
           else
             gh release create hamoudi-stage09-latest Hamoudi-Stage09-v1.8.0-build9.apk Hamoudi-Stage09-v1.8.0-build9.sha256 \
               --title "Hamoudi Stage 09 — Children UI and Educational Games" \
-              --notes "Stage 09 adds the approved child-friendly interface, approved Hamoudi icon, educational games, local sounds, favorites, and the redesigned memories timeline." \
+              --notes "Stage 09 implements the approved child-friendly interface, approved Hamoudi icon, educational games, local sounds, favorites, and redesigned memories screens." \
               --prerelease --target "${GITHUB_SHA}"
           fi
