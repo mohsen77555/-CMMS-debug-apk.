@@ -1,1 +1,1 @@
-Trigger the main-branch workflow to build and publish Hamoudi Stage 11 from the development source branch.
+Retry the main-branch Stage 11 builder after confirming GitHub Actions is processing workflow triggers.
