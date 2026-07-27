@@ -147,7 +147,11 @@ jobs:
           set -euo pipefail
           python3 tool/prepare_platforms.py
           sed -i 's/textDirection: TextDirection\.rtl/textDirection: ui.TextDirection.rtl/' lib/services/memory_book_service.dart
+          grep -RIl 'FilePicker\.pickFiles' lib | while read -r file; do
+            sed -i 's/FilePicker\.pickFiles/FilePicker.platform.pickFiles/g' "$file"
+          done
           grep -n 'textDirection:' lib/services/memory_book_service.dart
+          grep -R -n 'FilePicker\.platform\.pickFiles' lib
 
       - name: Generate launcher icons
         working-directory: app
