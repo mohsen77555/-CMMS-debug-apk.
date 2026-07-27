@@ -78,7 +78,22 @@ jobs:
 
       - name: Install Flutter dependencies
         working-directory: app
-        run: flutter pub get
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          flutter pub get 2>&1 | tee /tmp/hamoudi-pub-get.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            encoded=$(base64 -w 0 /tmp/hamoudi-pub-get.log)
+            gh api --method PUT \
+              "repos/${GITHUB_REPOSITORY}/contents/.build-status/pub-get-${GITHUB_RUN_ID}.log" \
+              -f message="Record Hamoudi dependency error [skip ci]" \
+              -f content="$encoded" \
+              -f branch="main"
+            exit "$status"
+          fi
 
       - name: Apply platform configuration
         working-directory: app
