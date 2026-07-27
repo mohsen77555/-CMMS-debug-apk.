@@ -1,0 +1,1 @@
+Retry the complete release build after adapting the source to FilePicker.platform.pickFiles.

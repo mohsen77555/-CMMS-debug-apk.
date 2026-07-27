@@ -1,0 +1,1 @@
+Run the full release compilation and record the compiler output if repair is required.

@@ -1,0 +1,1 @@
+Retry the complete release build with file_picker 10.3.10 to restore Android plugin registration.

@@ -1,0 +1,1 @@
+Run the complete build and record dependency resolution output if it fails.
