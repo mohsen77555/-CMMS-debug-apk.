@@ -35,56 +35,52 @@ jobs:
           cat .hamoudi-stage09-patch/script-part-*.txt > /tmp/apply_stage09.py
           python3 /tmp/apply_stage09.py app
 
-      - name: Export source map and key screens
+      - name: Export source map and key source files
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p /tmp/inspect
           {
             echo "===== FILES ====="
             find app/lib -type f | sort
             echo
             echo "===== ROUTES AND CLASSES ====="
             grep -R -nE "class .*Screen|routes:|GoRoute|Navigator|onGenerateRoute" app/lib | head -n 500 || true
-          } > /tmp/inspect/source-map.txt
+          } > /tmp/source-map.txt
 
-          for path in \
-            app/pubspec.yaml \
-            app/lib/main.dart \
-            app/lib/theme/app_theme.dart \
-            app/lib/screens/main_shell.dart \
-            app/lib/screens/home_screen.dart \
-            app/lib/screens/games_hub_screen.dart \
-            app/lib/screens/learning_cards_game_screen.dart \
-            app/lib/screens/bubble_game_screen.dart \
-            app/lib/screens/colors_shapes_screen.dart \
-            app/lib/screens/sound_playground_screen.dart \
-            app/lib/screens/memories_screen.dart \
-            app/lib/screens/on_this_day_screen.dart \
-            app/lib/screens/favorites_screen.dart \
-            app/lib/screens/more_screen.dart \
-            app/lib/services/kid_audio_service.dart; do
-            if [ -f "$path" ]; then
-              cp --parents "$path" /tmp/inspect/
+          publish_file() {
+            local source="$1"
+            local target="$2"
+            test -f "$source" || return 0
+            local encoded
+            local current_sha
+            encoded=$(base64 -w 0 "$source")
+            current_sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/${target}?ref=hamoudi-full-build" --jq '.sha' 2>/dev/null || true)
+            if [ -n "$current_sha" ]; then
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${target}" \
+                -f message="Update Stage 09 source export [skip ci]" \
+                -f content="$encoded" -f sha="$current_sha" -f branch="hamoudi-full-build"
+            else
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${target}" \
+                -f message="Add Stage 09 source export [skip ci]" \
+                -f content="$encoded" -f branch="hamoudi-full-build"
             fi
-          done
+          }
 
-          tar -czf /tmp/hamoudi-stage09-inspect.tar.gz -C /tmp/inspect .
-
-          listing=$(base64 -w 0 /tmp/inspect/source-map.txt)
-          current_sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/.hamoudi-stage09-inspect/source-map.txt?ref=hamoudi-full-build" --jq '.sha' 2>/dev/null || true)
-          if [ -n "$current_sha" ]; then
-            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/.hamoudi-stage09-inspect/source-map.txt" -f message="Update Stage 09 source map [skip ci]" -f content="$listing" -f sha="$current_sha" -f branch="hamoudi-full-build"
-          else
-            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/.hamoudi-stage09-inspect/source-map.txt" -f message="Add Stage 09 source map [skip ci]" -f content="$listing" -f branch="hamoudi-full-build"
-          fi
-
-      - name: Upload inspection artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: hamoudi-stage09-inspection
-          path: /tmp/hamoudi-stage09-inspect.tar.gz
-          if-no-files-found: error
-          retention-days: 2
+          publish_file /tmp/source-map.txt .hamoudi-stage09-source/source-map.txt
+          publish_file app/pubspec.yaml .hamoudi-stage09-source/pubspec.yaml
+          publish_file app/lib/main.dart .hamoudi-stage09-source/lib/main.dart
+          publish_file app/lib/theme/app_theme.dart .hamoudi-stage09-source/lib/theme/app_theme.dart
+          publish_file app/lib/screens/main_shell.dart .hamoudi-stage09-source/lib/screens/main_shell.dart
+          publish_file app/lib/screens/home_screen.dart .hamoudi-stage09-source/lib/screens/home_screen.dart
+          publish_file app/lib/screens/games_hub_screen.dart .hamoudi-stage09-source/lib/screens/games_hub_screen.dart
+          publish_file app/lib/screens/learning_cards_game_screen.dart .hamoudi-stage09-source/lib/screens/learning_cards_game_screen.dart
+          publish_file app/lib/screens/bubble_game_screen.dart .hamoudi-stage09-source/lib/screens/bubble_game_screen.dart
+          publish_file app/lib/screens/colors_shapes_screen.dart .hamoudi-stage09-source/lib/screens/colors_shapes_screen.dart
+          publish_file app/lib/screens/sound_playground_screen.dart .hamoudi-stage09-source/lib/screens/sound_playground_screen.dart
+          publish_file app/lib/screens/memories_screen.dart .hamoudi-stage09-source/lib/screens/memories_screen.dart
+          publish_file app/lib/screens/on_this_day_screen.dart .hamoudi-stage09-source/lib/screens/on_this_day_screen.dart
+          publish_file app/lib/screens/favorites_screen.dart .hamoudi-stage09-source/lib/screens/favorites_screen.dart
+          publish_file app/lib/screens/more_screen.dart .hamoudi-stage09-source/lib/screens/more_screen.dart
+          publish_file app/lib/services/kid_audio_service.dart .hamoudi-stage09-source/lib/services/kid_audio_service.dart
