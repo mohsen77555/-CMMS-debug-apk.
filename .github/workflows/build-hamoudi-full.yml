@@ -96,6 +96,31 @@ jobs:
             exit "$status"
           fi
 
+      - name: Patch JNI Gradle compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          paths = list(Path.home().glob('.pub-cache/hosted/pub.dev/jni-*/android/build.gradle'))
+          if not paths:
+              raise SystemExit('JNI Android Gradle file was not found')
+          for path in paths:
+              text = path.read_text(encoding='utf-8')
+              updated, count = re.subn(
+                  r'\nkotlin\s*\{\s*jvmToolchain\(17\)\s*\}\s*',
+                  '\n',
+                  text,
+                  flags=re.MULTILINE,
+              )
+              if count:
+                  path.write_text(updated, encoding='utf-8')
+                  print(f'Patched {path}')
+              else:
+                  print(f'No JNI toolchain block required patching in {path}')
+          PY
+
       - name: Apply platform configuration
         working-directory: app
         run: python3 tool/prepare_platforms.py
