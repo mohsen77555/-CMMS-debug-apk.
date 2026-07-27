@@ -1,0 +1,1 @@
+Retry the Stage 10 build after making the JNI compatibility patch safe for cached dependencies.
