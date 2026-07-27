@@ -108,9 +108,10 @@ jobs:
             PY
             python3 tool/prepare_platforms.py
             sed -i 's/textDirection: TextDirection\.rtl/textDirection: ui.TextDirection.rtl/' lib/services/memory_book_service.dart
-            grep -RIl 'FilePicker\.pickFiles' lib | while read -r file; do
+            while IFS= read -r file; do
+              [ -n "$file" ] || continue
               sed -i 's/FilePicker\.pickFiles/FilePicker.platform.pickFiles/g' "$file"
-            done
+            done < <(grep -RIl 'FilePicker\.pickFiles' lib || true)
             dart run flutter_launcher_icons
           } 2>&1 | tee /tmp/stage09-v2-compatibility.log
 
