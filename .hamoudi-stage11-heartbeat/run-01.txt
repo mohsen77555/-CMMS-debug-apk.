@@ -1,0 +1,1 @@
+Verify that GitHub Actions is processing workflow triggers on the main branch.
