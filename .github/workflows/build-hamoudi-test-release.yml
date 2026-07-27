@@ -1,0 +1,189 @@
+name: Build Public Hamoudi Test APK
+
+on:
+  pull_request:
+    paths:
+      - ".hamoudi-trigger/**"
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    name: Build and publish Hamoudi APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create Hamoudi Android app
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter create --platforms=android --org com.alhadi --project-name hamoudi app
+          rm -rf app/test
+          sed -i 's/^version:.*/version: 1.7.0+8/' app/pubspec.yaml
+          cat > app/lib/main.dart <<'DART'
+          import 'package:flutter/material.dart';
+
+          void main() => runApp(const HamoudiApp());
+
+          class HamoudiApp extends StatelessWidget {
+            const HamoudiApp({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: 'حمودي',
+                theme: ThemeData(
+                  useMaterial3: true,
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: const Color(0xFFD4AF37),
+                  ),
+                ),
+                home: const Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: HamoudiPage(),
+                ),
+              );
+            }
+          }
+
+          class HamoudiPage extends StatefulWidget {
+            const HamoudiPage({super.key});
+
+            @override
+            State<HamoudiPage> createState() => _HamoudiPageState();
+          }
+
+          class _HamoudiPageState extends State<HamoudiPage> {
+            int memories = 0;
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(
+                  centerTitle: true,
+                  title: const Text(
+                    'حمودي',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+                floatingActionButton: FloatingActionButton.extended(
+                  onPressed: () {
+                    setState(() => memories++);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('تمت إضافة ذكرى تجريبية'),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_a_photo_rounded),
+                  label: const Text('ذكرى تجريبية'),
+                ),
+                body: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(28),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF111B2E), Color(0xFF344B70)],
+                        ),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(
+                            Icons.child_care_rounded,
+                            size: 82,
+                            color: Color(0xFFD4AF37),
+                          ),
+                          SizedBox(height: 14),
+                          Text(
+                            'ذكريات حمودي',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'APK تجريبي مبني عبر GitHub Actions',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.collections_bookmark_rounded),
+                        title: const Text('عدد الذكريات التجريبية'),
+                        trailing: Text(
+                          '$memories',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Card(
+                      child: ListTile(
+                        leading: Icon(Icons.verified_rounded),
+                        title: Text('البناء رقم 8'),
+                        subtitle: Text('نسخة Android قابلة للتثبيت'),
+                      ),
+                    ),
+                    const Card(
+                      child: ListTile(
+                        leading: Icon(Icons.lock_outline_rounded),
+                        title: Text('دون إعلانات أو حساب'),
+                        subtitle: Text('لا ترسل بيانات إلى الإنترنت.'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+          DART
+          sed -i 's/android:label="hamoudi"/android:label="حمودي"/' app/android/app/src/main/AndroidManifest.xml
+
+      - name: Analyze
+        working-directory: app
+        run: flutter analyze
+
+      - name: Build installable APK
+        working-directory: app
+        run: flutter build apk --debug
+
+      - name: Prepare APK and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp app/build/app/outputs/flutter-apk/app-debug.apk Hamoudi-v1.7.0-build8-test.apk
+          sha256sum Hamoudi-v1.7.0-build8-test.apk > Hamoudi-v1.7.0-build8-test.sha256
+          ls -lh Hamoudi-v1.7.0-build8-test.apk
+
+      - name: Publish public fixed release link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view hamoudi-test-latest >/dev/null 2>&1; then
+            gh release upload hamoudi-test-latest Hamoudi-v1.7.0-build8-test.apk Hamoudi-v1.7.0-build8-test.sha256 --clobber
+          else
+            gh release create hamoudi-test-latest Hamoudi-v1.7.0-build8-test.apk Hamoudi-v1.7.0-build8-test.sha256 --title "Hamoudi Test APK 1.7.0+8" --notes "Installable Arabic Hamoudi Android test APK built by GitHub Actions." --prerelease --target "${GITHUB_SHA}"
+          fi
