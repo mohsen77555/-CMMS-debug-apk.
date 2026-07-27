@@ -1,0 +1,1 @@
+Run Stage 09 with persistent status reporting and diagnostics.
