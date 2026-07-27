@@ -1,0 +1,31 @@
+name: Stage 11 workflow heartbeat
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".hamoudi-stage11-heartbeat/**"
+
+permissions:
+  contents: write
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record workflow start
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'status=started\nrun_id=%s\ncommit=%s\n' "$GITHUB_RUN_ID" "$GITHUB_SHA" > /tmp/stage11-heartbeat.txt
+          encoded=$(base64 -w 0 /tmp/stage11-heartbeat.txt)
+          target=".build-status/stage11-heartbeat.txt"
+          current_sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/${target}?ref=main" --jq '.sha' 2>/dev/null || true)
+          if [ -n "$current_sha" ]; then
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${target}" -f message="Update Stage 11 heartbeat [skip ci]" -f content="$encoded" -f sha="$current_sha" -f branch="main"
+          else
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${target}" -f message="Record Stage 11 heartbeat [skip ci]" -f content="$encoded" -f branch="main"
+          fi
