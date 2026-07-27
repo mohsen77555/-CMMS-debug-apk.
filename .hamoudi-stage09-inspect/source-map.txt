@@ -1,0 +1,191 @@
+===== FILES =====
+app/lib/data/memory_database.dart
+app/lib/main.dart
+app/lib/models/app_diagnostics.dart
+app/lib/models/backup_models.dart
+app/lib/models/child_profile.dart
+app/lib/models/family_member.dart
+app/lib/models/future_letter.dart
+app/lib/models/memory_entry.dart
+app/lib/models/memory_media.dart
+app/lib/models/milestone.dart
+app/lib/providers/memory_provider.dart
+app/lib/providers/notification_provider.dart
+app/lib/providers/security_provider.dart
+app/lib/repositories/child_repository.dart
+app/lib/repositories/family_member_repository.dart
+app/lib/repositories/future_letter_repository.dart
+app/lib/repositories/media_repository.dart
+app/lib/repositories/memory_repository.dart
+app/lib/repositories/milestone_repository.dart
+app/lib/screens/about_privacy_screen.dart
+app/lib/screens/add_future_letter_screen.dart
+app/lib/screens/add_memory_screen.dart
+app/lib/screens/app_diagnostics_screen.dart
+app/lib/screens/backup_restore_screen.dart
+app/lib/screens/bubble_game_screen.dart
+app/lib/screens/child_mode_screen.dart
+app/lib/screens/children_screen.dart
+app/lib/screens/colors_shapes_screen.dart
+app/lib/screens/edit_milestone_screen.dart
+app/lib/screens/family_sharing_screen.dart
+app/lib/screens/favorites_screen.dart
+app/lib/screens/future_letter_details_screen.dart
+app/lib/screens/future_letters_screen.dart
+app/lib/screens/games_hub_screen.dart
+app/lib/screens/home_screen.dart
+app/lib/screens/learning_cards_game_screen.dart
+app/lib/screens/main_shell.dart
+app/lib/screens/media_player_screen.dart
+app/lib/screens/memories_screen.dart
+app/lib/screens/memory_book_screen.dart
+app/lib/screens/memory_details_screen.dart
+app/lib/screens/memory_media_screen.dart
+app/lib/screens/milestones_screen.dart
+app/lib/screens/more_screen.dart
+app/lib/screens/notification_coordinator.dart
+app/lib/screens/notification_settings_screen.dart
+app/lib/screens/on_this_day_screen.dart
+app/lib/screens/profile_screen.dart
+app/lib/screens/security_gate.dart
+app/lib/screens/security_settings_screen.dart
+app/lib/screens/sound_playground_screen.dart
+app/lib/screens/startup_recovery_screen.dart
+app/lib/screens/unlock_screen.dart
+app/lib/services/app_diagnostics_service.dart
+app/lib/services/backup_service.dart
+app/lib/services/family_share_service.dart
+app/lib/services/kid_audio_service.dart
+app/lib/services/media_service.dart
+app/lib/services/memory_book_service.dart
+app/lib/services/notification_service.dart
+app/lib/theme/app_theme.dart
+app/lib/widgets/empty_state.dart
+app/lib/widgets/memory_card.dart
+app/lib/widgets/parent_gate.dart
+
+===== ROUTES AND CLASSES =====
+app/lib/main.dart:133:class HamoodiSplashScreen extends StatelessWidget {
+app/lib/screens/family_sharing_screen.dart:9:class FamilySharingScreen extends StatefulWidget {
+app/lib/screens/family_sharing_screen.dart:17:class _FamilySharingScreenState extends State<FamilySharingScreen> {
+app/lib/screens/family_sharing_screen.dart:77:                  Navigator.of(dialogContext).pop();
+app/lib/screens/family_sharing_screen.dart:153:                      : () => Navigator.of(dialogContext).pop(),
+app/lib/screens/family_sharing_screen.dart:265:                  onPressed: () => Navigator.of(dialogContext).pop(false),
+app/lib/screens/family_sharing_screen.dart:269:                  onPressed: () => Navigator.of(dialogContext).pop(true),
+app/lib/screens/family_sharing_screen.dart:304:                  onPressed: () => Navigator.of(dialogContext).pop(),
+app/lib/screens/family_sharing_screen.dart:336:              onPressed: () => Navigator.of(dialogContext).pop(false),
+app/lib/screens/family_sharing_screen.dart:340:              onPressed: () => Navigator.of(dialogContext).pop(true),
+app/lib/screens/memory_details_screen.dart:13:class MemoryDetailsScreen extends StatelessWidget {
+app/lib/screens/memory_details_screen.dart:41:              onPressed: () => Navigator.of(dialogContext).pop(false),
+app/lib/screens/memory_details_screen.dart:45:              onPressed: () => Navigator.of(dialogContext).pop(true),
+app/lib/screens/memory_details_screen.dart:56:        Navigator.of(context).pop();
+app/lib/screens/memory_details_screen.dart:95:                Navigator.of(context).push(
+app/lib/screens/memory_details_screen.dart:188:                Navigator.of(context).push(
+app/lib/screens/memories_screen.dart:14:class MemoriesScreen extends StatefulWidget {
+app/lib/screens/memories_screen.dart:21:class _MemoriesScreenState extends State<MemoriesScreen> {
+app/lib/screens/memories_screen.dart:103:                        onTap: () => Navigator.of(context).push(
+app/lib/screens/memories_screen.dart:129:    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AddMemoryScreen()));
+app/lib/screens/memories_screen.dart:175:              onPressed: () => Navigator.of(context).pop(),
+app/lib/screens/sound_playground_screen.dart:6:class SoundPlaygroundScreen extends StatelessWidget {
+app/lib/screens/learning_cards_game_screen.dart:17:class LearningCardsGameScreen extends StatefulWidget {
+app/lib/screens/learning_cards_game_screen.dart:25:class _LearningCardsGameScreenState extends State<LearningCardsGameScreen> {
+app/lib/screens/main_shell.dart:41:    Navigator.of(context).push(
+app/lib/screens/startup_recovery_screen.dart:3:class StartupRecoveryScreen extends StatelessWidget {
+app/lib/screens/backup_restore_screen.dart:16:class BackupRestoreScreen extends StatefulWidget {
+app/lib/screens/backup_restore_screen.dart:24:class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
+app/lib/screens/backup_restore_screen.dart:154:                  onPressed: () => Navigator.of(context).pop(),
+app/lib/screens/backup_restore_screen.dart:186:                onPressed: () => Navigator.of(dialogContext).pop(false),
+app/lib/screens/backup_restore_screen.dart:190:                onPressed: () => Navigator.of(dialogContext).pop(true),
+app/lib/screens/backup_restore_screen.dart:221:                  Navigator.of(dialogContext).pop();
+app/lib/screens/backup_restore_screen.dart:227:                onPressed: () => Navigator.of(dialogContext).pop(),
+app/lib/screens/backup_restore_screen.dart:246:                  onPressed: () => Navigator.of(context).pop(),
+app/lib/screens/backup_restore_screen.dart:297:              onPressed: () => Navigator.of(dialogContext).pop(false),
+app/lib/screens/backup_restore_screen.dart:301:              onPressed: () => Navigator.of(dialogContext).pop(true),
+app/lib/screens/notification_settings_screen.dart:7:class NotificationSettingsScreen extends StatelessWidget {
+app/lib/screens/unlock_screen.dart:7:class UnlockScreen extends StatefulWidget {
+app/lib/screens/unlock_screen.dart:14:class _UnlockScreenState extends State<UnlockScreen> {
+app/lib/screens/favorites_screen.dart:10:class FavoritesScreen extends StatelessWidget {
+app/lib/screens/favorites_screen.dart:60:                    onTap: () => Navigator.of(context).push(
+app/lib/screens/add_future_letter_screen.dart:7:class AddFutureLetterScreen extends StatefulWidget {
+app/lib/screens/add_future_letter_screen.dart:15:class _AddFutureLetterScreenState extends State<AddFutureLetterScreen> {
+app/lib/screens/add_future_letter_screen.dart:58:        Navigator.of(context).pop();
+app/lib/screens/bubble_game_screen.dart:5:class BubbleGameScreen extends StatefulWidget {
+app/lib/screens/bubble_game_screen.dart:12:class _BubbleGameScreenState extends State<BubbleGameScreen> {
+app/lib/screens/security_settings_screen.dart:7:class SecuritySettingsScreen extends StatelessWidget {
+app/lib/screens/security_settings_screen.dart:42:                    Navigator.of(dialogContext).pop(value);
+app/lib/screens/security_settings_screen.dart:52:                  onPressed: () => Navigator.of(dialogContext).pop(),
+app/lib/screens/security_settings_screen.dart:59:                      Navigator.of(dialogContext).pop(value);
+app/lib/screens/future_letter_details_screen.dart:8:class FutureLetterDetailsScreen extends StatefulWidget {
+app/lib/screens/future_letter_details_screen.dart:21:class _FutureLetterDetailsScreenState
+app/lib/screens/future_letter_details_screen.dart:54:              onPressed: () => Navigator.of(dialogContext).pop(false),
+app/lib/screens/future_letter_details_screen.dart:58:              onPressed: () => Navigator.of(dialogContext).pop(true),
+app/lib/screens/future_letter_details_screen.dart:69:        Navigator.of(context).pop();
+app/lib/screens/home_screen.dart:15:class HomeScreen extends StatelessWidget {
+app/lib/screens/home_screen.dart:40:                  Navigator.of(context).push(
+app/lib/screens/home_screen.dart:115:    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
+app/lib/screens/memory_book_screen.dart:8:class MemoryBookScreen extends StatefulWidget {
+app/lib/screens/memory_book_screen.dart:15:class _MemoryBookScreenState extends State<MemoryBookScreen> {
+app/lib/screens/edit_milestone_screen.dart:8:class EditMilestoneScreen extends StatefulWidget {
+app/lib/screens/edit_milestone_screen.dart:21:class _EditMilestoneScreenState extends State<EditMilestoneScreen> {
+app/lib/screens/edit_milestone_screen.dart:81:      Navigator.of(context).pop();
+app/lib/screens/media_player_screen.dart:10:class MediaPlayerScreen extends StatelessWidget {
+app/lib/screens/add_memory_screen.dart:11:class AddMemoryScreen extends StatefulWidget {
+app/lib/screens/add_memory_screen.dart:23:class _AddMemoryScreenState extends State<AddMemoryScreen> {
+app/lib/screens/add_memory_screen.dart:71:    Navigator.of(context).pop();
+app/lib/screens/add_memory_screen.dart:170:        Navigator.of(context).pop();
+app/lib/screens/child_mode_screen.dart:10:class ChildModeScreen extends StatefulWidget {
+app/lib/screens/child_mode_screen.dart:17:class _ChildModeScreenState extends State<ChildModeScreen> {
+app/lib/screens/child_mode_screen.dart:30:      Navigator.of(context).pop();
+app/lib/screens/child_mode_screen.dart:125:                Navigator.of(context).push(
+app/lib/screens/child_mode_screen.dart:139:                Navigator.of(context).push(
+app/lib/screens/games_hub_screen.dart:9:class GamesHubScreen extends StatelessWidget {
+app/lib/screens/games_hub_screen.dart:62:                    Navigator.of(context).push(
+app/lib/screens/games_hub_screen.dart:83:                      onTap: () => Navigator.of(context).push(
+app/lib/screens/games_hub_screen.dart:95:                      onTap: () => Navigator.of(context).push(
+app/lib/screens/games_hub_screen.dart:153:                onPressed: () => Navigator.of(context).pop(),
+app/lib/screens/milestones_screen.dart:8:class MilestonesScreen extends StatelessWidget {
+app/lib/screens/milestones_screen.dart:71:                          Navigator.of(context).push(
+app/lib/screens/memory_media_screen.dart:14:class MemoryMediaScreen extends StatefulWidget {
+app/lib/screens/memory_media_screen.dart:26:class _MemoryMediaScreenState extends State<MemoryMediaScreen> {
+app/lib/screens/memory_media_screen.dart:72:                    Navigator.of(sheetContext).pop();
+app/lib/screens/memory_media_screen.dart:86:                    Navigator.of(sheetContext).pop();
+app/lib/screens/memory_media_screen.dart:100:                    Navigator.of(sheetContext).pop();
+app/lib/screens/memory_media_screen.dart:177:              onPressed: () => Navigator.of(dialogContext).pop(),
+app/lib/screens/memory_media_screen.dart:182:                Navigator.of(dialogContext).pop(controller.text);
+app/lib/screens/memory_media_screen.dart:212:              onPressed: () => Navigator.of(dialogContext).pop(false),
+app/lib/screens/memory_media_screen.dart:216:              onPressed: () => Navigator.of(dialogContext).pop(true),
+app/lib/screens/memory_media_screen.dart:384:                      Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:18:class ProfileScreen extends StatefulWidget {
+app/lib/screens/profile_screen.dart:25:class _ProfileScreenState extends State<ProfileScreen> {
+app/lib/screens/profile_screen.dart:130:                    Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:244:                        Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:260:                        Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:299:                        Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:315:                        Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:358:                        Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:375:                        Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:392:                        Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:408:                        Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:425:                        Navigator.of(context).push(
+app/lib/screens/profile_screen.dart:442:                        Navigator.of(context).push(
+app/lib/screens/children_screen.dart:8:class ChildrenScreen extends StatelessWidget {
+app/lib/screens/children_screen.dart:74:                  Navigator.of(dialogContext).pop();
+app/lib/screens/children_screen.dart:150:                      : () => Navigator.of(dialogContext).pop(),
+app/lib/screens/children_screen.dart:189:              onPressed: () => Navigator.of(dialogContext).pop(false),
+app/lib/screens/children_screen.dart:193:              onPressed: () => Navigator.of(dialogContext).pop(true),
+app/lib/screens/future_letters_screen.dart:10:class FutureLettersScreen extends StatelessWidget {
+app/lib/screens/future_letters_screen.dart:14:    Navigator.of(context).push(
+app/lib/screens/future_letters_screen.dart:64:                      Navigator.of(context).push(
+app/lib/screens/on_this_day_screen.dart:9:class OnThisDayScreen extends StatelessWidget {
+app/lib/screens/on_this_day_screen.dart:114:                        Navigator.of(context).push(
+app/lib/screens/colors_shapes_screen.dart:3:class ColorsShapesScreen extends StatefulWidget {
+app/lib/screens/colors_shapes_screen.dart:10:class _ColorsShapesScreenState extends State<ColorsShapesScreen> {
+app/lib/screens/more_screen.dart:13:class MoreScreen extends StatelessWidget {
+app/lib/screens/more_screen.dart:76:                    onTap: () => Navigator.of(context).push(
+app/lib/screens/about_privacy_screen.dart:3:class AboutPrivacyScreen extends StatelessWidget {
+app/lib/screens/app_diagnostics_screen.dart:10:class AppDiagnosticsScreen extends StatefulWidget {
+app/lib/screens/app_diagnostics_screen.dart:18:class _AppDiagnosticsScreenState extends State<AppDiagnosticsScreen> {
+app/lib/screens/app_diagnostics_screen.dart:148:              Navigator.of(context).push(
+app/lib/widgets/parent_gate.dart:52:                        Navigator.of(dialogContext).pop(true);
+app/lib/widgets/parent_gate.dart:62:                  onPressed: () => Navigator.of(dialogContext).pop(false),
+app/lib/widgets/parent_gate.dart:69:                      Navigator.of(dialogContext).pop(true);
