@@ -84,6 +84,7 @@ jobs:
         run: |
           set +e
           sed -i 's/^  share_plus: .*/  share_plus: 12.0.2/' pubspec.yaml
+          sed -i 's/^  file_picker: .*/  file_picker: 10.3.10/' pubspec.yaml
           flutter pub get 2>&1 | tee /tmp/hamoudi-pub-get.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
