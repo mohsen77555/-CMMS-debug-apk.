@@ -1,5 +1,5 @@
 status=success
-run_id=30292576312
+run_id=30293232199
 source=success
 sounds=success
 flutter=success
@@ -30,7 +30,7 @@ warning • Unnecessary cast. Try removing the cast • lib/providers/security_p
    info • The import of 'package:cross_file/cross_file.dart' is unnecessary because all of the used elements are also provided by the import of 'package:share_plus/share_plus.dart'. Try removing the import directive • lib/services/family_share_service.dart:6:8 • unnecessary_import
    info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/services.dart'. Try removing the import directive • lib/services/memory_book_service.dart:2:8 • unnecessary_import
 
-17 issues found. (ran in 11.7s)
+17 issues found. (ran in 15.7s)
 
 ===== stage11-main-build.log =====
 Running Gradle task 'assembleRelease'...                        
@@ -51,11 +51,11 @@ Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
 "Install CMake 3.22.1 v.3.22.1" finished.
 Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 22588 bytes (98.6% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
 Caught exception: Already watching path: /home/runner/work/-CMMS-debug-apk./-CMMS-debug-apk./app/android
-Running Gradle task 'assembleRelease'...                          374.4s
+Running Gradle task 'assembleRelease'...                          428.5s
 ✓ Built build/app/outputs/flutter-apk/app-release.apk (67.1MB)
 
 ===== stage11-main-compatibility.log =====
-Removed incompatible Kotlin block from /home/runner/.pub-cache/hosted/pub.dev/jni-1.0.1/android/build.gradle
+JNI Kotlin block already compatible in /home/runner/.pub-cache/hosted/pub.dev/jni-1.0.1/android/build.gradle
 اكتمل تجهيز Android وiOS للمرحلة 08 النهائية.
   ════════════════════════════════════════════
      FLUTTER LAUNCHER ICONS (v0.14.4)                               
@@ -255,7 +255,7 @@ Changed 154 dependencies!
 Try `flutter pub outdated` for more information.
 
 ===== stage11-main-release.log =====
--rw-r--r-- 1 runner runner 64M Jul 27 18:18 Hamoudi-Stage11-v2.0.0-build11.apk
+-rw-r--r-- 1 runner runner 64M Jul 27 18:27 Hamoudi-Stage11-v2.0.0-build11.apk
 
 ===== stage11-main-sounds.log =====
 
